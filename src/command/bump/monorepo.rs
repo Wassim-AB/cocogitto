@@ -45,16 +45,28 @@ impl CocoGitto {
         hooks_config: Option<&str>,
         annotated: Option<String>,
         dry_run: bool,
+        skip_ci: Option<String>,
     ) -> Result<()> {
         match increment {
             IncrementCommand::Auto => {
                 if SETTINGS.generate_mono_repository_global_tag {
-                    self.create_monorepo_version_auto(pre_release, hooks_config, annotated, dry_run)
+                    self.create_monorepo_version_auto(
+                        pre_release,
+                        hooks_config,
+                        annotated,
+                        dry_run,
+                        skip_ci,
+                    )
                 } else {
                     if annotated.is_some() {
                         warn!("--annotated flag is not supported for package bumps without a global tag");
                     }
-                    self.create_all_package_version_auto(pre_release, hooks_config, dry_run)
+                    self.create_all_package_version_auto(
+                        pre_release,
+                        hooks_config,
+                        dry_run,
+                        skip_ci,
+                    )
                 }
             }
             _ => self.create_monorepo_version_manual(
@@ -63,6 +75,7 @@ impl CocoGitto {
                 hooks_config,
                 annotated,
                 dry_run,
+                skip_ci,
             ),
         }
     }
@@ -72,6 +85,7 @@ impl CocoGitto {
         pre_release: Option<&str>,
         hooks_config: Option<&str>,
         dry_run: bool,
+        skip_ci: Option<String>,
     ) -> Result<()> {
         self.pre_bump_checks()?;
         // Get package bumps
@@ -96,8 +110,13 @@ impl CocoGitto {
         self.bump_packages(pre_release, hooks_config, &bumps)?;
 
         let sign = self.repository.gpg_sign();
-        self.repository
-            .commit("chore(version): bump packages", sign)?;
+        self.repository.commit(
+            &format!(
+                "chore(version): bump packages {}",
+                skip_ci.unwrap_or_default()
+            ),
+            sign,
+        )?;
 
         for bump in &bumps {
             self.repository.create_tag(&bump.new_version.prefixed_tag)?;
@@ -131,6 +150,7 @@ impl CocoGitto {
         hooks_config: Option<&str>,
         annotated: Option<String>,
         dry_run: bool,
+        skip_ci: Option<String>,
     ) -> Result<()> {
         self.pre_bump_checks()?;
         // Get package bumps
@@ -228,7 +248,11 @@ impl CocoGitto {
 
         let sign = self.repository.gpg_sign();
         self.repository.commit(
-            &format!("chore(version): {}", next_version.prefixed_tag),
+            &format!(
+                "chore(version): {} {}",
+                next_version.prefixed_tag,
+                skip_ci.unwrap_or_default()
+            ),
             sign,
         )?;
 
@@ -279,6 +303,7 @@ impl CocoGitto {
         hooks_config: Option<&str>,
         annotated: Option<String>,
         dry_run: bool,
+        skip_ci: Option<String>,
     ) -> Result<()> {
         self.pre_bump_checks()?;
         // Get package bumps
@@ -344,7 +369,11 @@ impl CocoGitto {
 
         let sign = self.repository.gpg_sign();
         self.repository.commit(
-            &format!("chore(version): {}", next_version.prefixed_tag),
+            &format!(
+                "chore(version): {} {}",
+                next_version.prefixed_tag,
+                skip_ci.unwrap_or_default()
+            ),
             sign,
         )?;
 

@@ -23,6 +23,7 @@ impl CocoGitto {
         hooks_config: Option<&str>,
         annotated: Option<String>,
         dry_run: bool,
+        skip_ci: Option<String>,
     ) -> Result<()> {
         self.pre_bump_checks()?;
 
@@ -82,8 +83,10 @@ impl CocoGitto {
         self.unwrap_or_stash_and_exit(&tag, hook_result);
 
         let sign = self.repository.gpg_sign();
-        self.repository
-            .commit(&format!("chore(version): {tag}"), sign)?;
+        self.repository.commit(
+            &format!("chore(version): {tag} {}", skip_ci.unwrap_or_default()),
+            sign,
+        )?;
 
         if let Some(msg_tmpl) = annotated {
             let mut context = tera::Context::new();

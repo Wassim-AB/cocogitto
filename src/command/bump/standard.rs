@@ -21,6 +21,7 @@ impl CocoGitto {
         hooks_config: Option<&str>,
         annotated: Option<String>,
         dry_run: bool,
+        skip_ci: Option<String>,
     ) -> Result<()> {
         self.pre_bump_checks()?;
 
@@ -71,7 +72,11 @@ impl CocoGitto {
         let sign = self.repository.gpg_sign();
 
         self.repository.commit(
-            &format!("chore(version): {}", next_version.prefixed_tag),
+            &format!(
+                "chore(version): {} {}",
+                next_version.prefixed_tag,
+                skip_ci.unwrap_or_default()
+            ),
             sign,
         )?;
 
